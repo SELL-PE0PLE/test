@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% Рабочий Релакс Плеер</title>
+    <title>Тестовый Фоновый Плеер</title>
     <style>
         body {
             margin: 0;
@@ -40,7 +40,7 @@
         }
 
         .disc.playing {
-            animation: spin 8s linear infinite;
+            animation: spin 12s linear infinite; /* Очень медленное вращение для вида */
             background: linear-gradient(45deg, #1f6feb, #238636);
             border-color: #58a6ff;
         }
@@ -53,13 +53,14 @@
         }
 
         h2 {
-            font-size: 16px;
+            font-size: 15px;
             margin: 0 0 20px 0;
             color: #fff;
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
+            line-height: 1.4;
         }
 
         .controls {
@@ -99,7 +100,7 @@
             border-radius: 6px;
             cursor: pointer;
             text-align: left;
-            font-size: 14px;
+            font-size: 13px;
             border: 2px solid transparent; 
             transition: all 0.15s ease;
         }
@@ -108,7 +109,7 @@
             background: #30363d;
         }
 
-        /* Синяя четкая обводка, которая гарантированно перемещается */
+        /* Четкая синяя обводка активного пункта */
         .track.active {
             border-color: #58a6ff !important;
             background: rgba(88, 166, 255, 0.1);
@@ -129,16 +130,16 @@
             <div class="center-hole"></div>
         </div>
         
-        <h2 id="now-playing">Текущий трек: Мелодия 1: Акустическая гитара</h2>
+        <h2 id="now-playing">Текущий фон:<br>Атмосфера уютной кофейни</h2>
         
         <div class="controls">
-            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ФОН</button>
         </div>
 
         <div class="playlist">
-            <div class="track active" data-url="https://soundhelix.com" data-name="Мелодия 1: Акустическая гитара">🎸 Вариант 1: Спокойная гитара</div>
-            <div class="track" data-url="https://soundhelix.com" data-name="Мелодия 2: Вечернее фортепиано">🎹 Вариант 2: Мягкие клавиши</div>
-            <div class="track" data-url="https://soundhelix.com" data-name="Мелодия 3: Легкий Relax-Фон">🌌 Вариант 3: Расслабляющий фон</div>
+            <div class="track active" data-url="https://archive.org" data-name="Атмосфера уютной кофейни">☕ Вариант 1: Уютная кофейня (Гул + Lo-Fi)</div>
+            <div class="track" data-url="https://archive.org" data-name="Мягкий офисный фон">🏢 Вариант 2: Нейтральный фон (Офис без шума)</div>
+            <div class="track" data-url="https://archive.org" data-name="Легкий фоновый лаунж">🎷 Вариант 3: Приглушенный лаунж-джаз</div>
         </div>
     </div>
 
@@ -150,15 +151,16 @@
 
         let isPlaying = false;
         
-        // Создаем глобальный аудиообъект
+        // Создаем аудиообъект с поддержкой CORS для стабильности
         let currentAudio = new Audio();
         currentAudio.loop = true;
-        currentAudio.volume = 1.0; // Выставлено на 100%
+        currentAudio.volume = 1.0; // 100% громкость
+        currentAudio.crossOrigin = "anonymous";
 
-        // Инициализируем стартовый трек по умолчанию из первого элемента
+        // Берем первый трек по умолчанию
         currentAudio.src = tracks[0].getAttribute('data-url');
 
-        // Логика работы главной кнопки
+        // Главная кнопка Вкл/Выкл
         triggerBtn.addEventListener('click', function() {
             if (!isPlaying) {
                 isPlaying = true;
@@ -166,43 +168,35 @@
                 this.classList.add('active');
                 disc.classList.add('playing');
                 
-                // Запуск аудиопотока
                 currentAudio.play().catch(err => {
-                    console.log("Ошибка запуска аудио:", err);
+                    console.log("Браузер требует клика по плееру:", err);
                 });
             } else {
                 isPlaying = false;
-                this.innerText = 'ВКЛЮЧИТЬ МУЗЫКУ';
+                this.innerText = 'ВКЛЮЧИТЬ ФОН';
                 this.classList.remove('active');
                 disc.classList.remove('playing');
-                
-                // Ставим на паузу
                 currentAudio.pause();
             }
         });
 
-        // Железобетонная логика переключения треков и обводок
+        // Переключение треков с гарантированным переходом рамки
         tracks.forEach(track => {
             track.addEventListener('click', function() {
-                // 1. Полностью убираем обводку у всех элементов
+                // Снимаем класс со всех
                 tracks.forEach(t => t.classList.remove('active'));
-                
-                // 2. Добавляем синюю обводку именно на нажатый элемент
+                // Ставим рамку на текущий
                 this.classList.add('active');
 
-                // 3. Вытаскиваем данные трека
-                const trackUrl = this.getAttribute('data-url');
-                const trackName = this.getAttribute('data-name');
+                const url = this.getAttribute('data-url');
+                const name = this.getAttribute('data-name');
 
-                // 4. Обновляем текст на экране
-                nowPlaying.innerText = "Текущий трек: " + trackName;
+                nowPlaying.innerHTML = "Текущий фон:<br>" + name;
 
-                // 5. Меняем источник звука
                 currentAudio.pause();
-                currentAudio.src = trackUrl;
-                currentAudio.volume = 1.0; // Держим громкость на 100%
+                currentAudio.src = url;
+                currentAudio.volume = 1.0;
 
-                // Если плеер уже работал — запускаем новую мелодию автоматически
                 if (isPlaying) {
                     currentAudio.play().catch(err => console.log("Ошибка переключения:", err));
                 }
