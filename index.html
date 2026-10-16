@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>30 Вариантов Звука — Тестовый Плеер</title>
+    <title>Релакс Эмбиент Плеер</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,14 +13,18 @@
             <div class="center-hole"></div>
         </div>
         
-        <h2 id="now-playing">Текущий трек: Вариант 1: Суб-бас пила</h2>
+        <h2 id="now-playing">Текущий трек: ✨ Медитация и Покой</h2>
         
         <div class="controls">
-            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ЗВУК</button>
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
         </div>
 
-        <!-- Контейнер для 30 треков с автоскроллом -->
-        <div id="playlist" class="playlist"></div>
+        <!-- Красивый релакс-плейлист -->
+        <div class="playlist">
+            <div class="track active" data-id="relax">✨ Вариант 1: Медитация и Покой</div>
+            <div class="track" data-id="piano">🎹 Вариант 2: Вечернее Фортепиано</div>
+            <div class="track" data-id="space">🌌 Вариант 3: Глубокий Космос</div>
+        </div>
     </div>
 
     <script src="script.js"></script>
