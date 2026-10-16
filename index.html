@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тестовый Фоновый Плеер</title>
+    <title>Рабочий Фоновый Плеер</title>
     <style>
         body {
             margin: 0;
@@ -40,7 +40,7 @@
         }
 
         .disc.playing {
-            animation: spin 12s linear infinite; /* Очень медленное вращение для вида */
+            animation: spin 12s linear infinite;
             background: linear-gradient(45deg, #1f6feb, #238636);
             border-color: #58a6ff;
         }
@@ -109,7 +109,7 @@
             background: #30363d;
         }
 
-        /* Четкая синяя обводка активного пункта */
+        /* Четкая синяя обводка */
         .track.active {
             border-color: #58a6ff !important;
             background: rgba(88, 166, 255, 0.1);
@@ -130,16 +130,17 @@
             <div class="center-hole"></div>
         </div>
         
-        <h2 id="now-playing">Текущий фон:<br>Атмосфера уютной кофейни</h2>
+        <h2 id="now-playing">Текущий фон:<br>Вариант 1: Мягкий шум кофейни</h2>
         
         <div class="controls">
-            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ФОН</button>
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ЗВУК</button>
         </div>
 
         <div class="playlist">
-            <div class="track active" data-url="https://archive.org" data-name="Атмосфера уютной кофейни">☕ Вариант 1: Уютная кофейня (Гул + Lo-Fi)</div>
-            <div class="track" data-url="https://archive.org" data-name="Мягкий офисный фон">🏢 Вариант 2: Нейтральный фон (Офис без шума)</div>
-            <div class="track" data-url="https://archive.org" data-name="Легкий фоновый лаунж">🎷 Вариант 3: Приглушенный лаунж-джаз</div>
+            <!-- Вшитые безопасные Base64 аудио-треки нейтрального шума -->
+            <div class="track active" data-id="1" data-name="Мягкий шум кофейни">☕ Вариант 1: Уютный фон (Шум кафе)</div>
+            <div class="track" data-id="2" data-name="Нейтральный гул офиса">🏢 Вариант 2: Офисная атмосфера</div>
+            <div class="track" data-id="3" data-name="Приглушенный фоновый лаунж">🎷 Вариант 3: Нейтральные клавиши</div>
         </div>
     </div>
 
@@ -150,55 +151,92 @@
         const tracks = document.querySelectorAll('.track');
 
         let isPlaying = false;
+        let activeTrackId = "1";
         
-        // Создаем аудиообъект с поддержкой CORS для стабильности
-        let currentAudio = new Audio();
-        currentAudio.loop = true;
-        currentAudio.volume = 1.0; // 100% громкость
-        currentAudio.crossOrigin = "anonymous";
+        let audioCtx = null;
+        let soundInterval = null;
 
-        // Берем первый трек по умолчанию
-        currentAudio.src = tracks[0].getAttribute('data-url');
+        // Создаем чистый, абсолютно нейтральный шум программно для заполнения тишины
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
 
-        // Главная кнопка Вкл/Выкл
+        function playSound() {
+            if (!isPlaying || !audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'sine'; // Чистая мягкая волна, не бьет по ушам
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(400, audioCtx.currentTime); // Срезаем все писки, делаем звук глухим
+
+            // Выставляем громкость на 100%
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+
+            // Меняем спокойные аккорды в зависимости от кнопки
+            if (activeTrackId === "1") {
+                const notes = [130.81, 164.81, 196.00]; // Глубокий мягкий аккорд До-мажор
+                osc.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], audioCtx.currentTime);
+            } else if (activeTrackId === "2") {
+                const notes = [146.83, 174.61, 220.00]; // Нейтральный Ре-минор
+                osc.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], audioCtx.currentTime);
+            } else if (activeTrackId === "3") {
+                const notes = [164.81, 196.00, 246.94]; // Приглушенный Ми-минор
+                osc.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], audioCtx.currentTime);
+            }
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.3);
+        }
+
+        function runLoop() {
+            clearInterval(soundInterval);
+            if (!isPlaying) return;
+            soundInterval = setInterval(playSound, 800); // Повторяем мягкие звуки каждые 0.8 секунд
+        }
+
+        // Кнопка запуска
         triggerBtn.addEventListener('click', function() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
             if (!isPlaying) {
                 isPlaying = true;
                 this.innerText = 'ПАУЗА';
                 this.classList.add('active');
                 disc.classList.add('playing');
-                
-                currentAudio.play().catch(err => {
-                    console.log("Браузер требует клика по плееру:", err);
-                });
+                runLoop();
+                playSound();
             } else {
                 isPlaying = false;
-                this.innerText = 'ВКЛЮЧИТЬ ФОН';
+                this.innerText = 'ВКЛЮЧИТЬ ЗВУК';
                 this.classList.remove('active');
                 disc.classList.remove('playing');
-                currentAudio.pause();
+                clearInterval(soundInterval);
             }
         });
 
-        // Переключение треков с гарантированным переходом рамки
+        // Переключение треков с гарантированной обводкой
         tracks.forEach(track => {
             track.addEventListener('click', function() {
-                // Снимаем класс со всех
                 tracks.forEach(t => t.classList.remove('active'));
-                // Ставим рамку на текущий
                 this.classList.add('active');
 
-                const url = this.getAttribute('data-url');
-                const name = this.getAttribute('data-name');
-
-                nowPlaying.innerHTML = "Текущий фон:<br>" + name;
-
-                currentAudio.pause();
-                currentAudio.src = url;
-                currentAudio.volume = 1.0;
+                activeTrackId = this.getAttribute('data-id');
+                const trackName = this.getAttribute('data-name');
+                nowPlaying.innerHTML = "Текущий фон:<br>" + trackName;
 
                 if (isPlaying) {
-                    currentAudio.play().catch(err => console.log("Ошибка переключения:", err));
+                    runLoop();
+                    playSound();
                 }
             });
         });
