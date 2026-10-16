@@ -1,301 +1,138 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аудио Плеер</title>
-    <style>
-        body {
-            margin: 0;
-            background: #0d1117;
-            color: #c9d1d9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+// База данных из 30 вариантов звука для стресс-теста аудиосистем
+const soundDatabase = {
+    // === СЕКЦИЯ 1: ЧИСТЫЕ СИГНАЛЫ (Пила / Sawtooth) ===
+    "1": { type: "sawtooth", freq: 110.00, speed: 400, label: "Вариант 1: Суб-бас пила" },
+    "2": { type: "sawtooth", freq: 220.00, speed: 350, label: "Вариант 2: Низкая пила" },
+    "3": { type: "sawtooth", freq: 293.66, speed: 400, label: "Вариант 3: Классический лид Ре" },
+    "4": { type: "sawtooth", freq: 440.00, speed: 300, label: "Вариант 4: Стандартный тон Ля" },
+    "5": { type: "sawtooth", freq: 587.33, speed: 250, label: "Вариант 5: Высокая пила" },
+    "6": { type: "sawtooth", freq: 880.00, speed: 200, label: "Вариант 6: Пронзительный зуммер" },
 
-        /* Стильный контейнер плеера */
-        .player-container {
-            background: #161b22;
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid #30363d;
-            width: 320px;
-            text-align: center;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-        }
+    // === СЕКЦИЯ 2: ПЛОТНЫЕ ИМПУЛЬСЫ (Квадрат / Square) ===
+    "7": { type: "square", freq: 130.81, speed: 500, label: "Вариант 7: Басовый квадрат" },
+    "8": { type: "square", freq: 196.00, speed: 400, label: "Вариант 8: Ретро Пульс Соль" },
+    "9": { type: "square", freq: 261.63, speed: 300, label: "Вариант 9: 8-битное До" },
+    "10": { type: "square", freq: 329.63, speed: 350, label: "Вариант 10: Аркадный Ми" },
+    "11": { type: "square", freq: 493.88, speed: 250, label: "Вариант 11: Высокий информер" },
+    "12": { type: "square", freq: 659.25, speed: 150, label: "Вариант 12: Быстрый чиптюн-клик" },
 
-        /* Виниловая пластинка / Обложка */
-        .cover {
-            width: 140px;
-            height: 140px;
-            background: linear-gradient(45deg, #1f6feb, #238636);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 5px solid #21262d;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            transition: transform 0.5s ease;
-        }
+    // === СЕКЦИЯ 3: МЯГКИЕ ТОНА (Треугольник / Triangle) ===
+    "13": { type: "triangle", freq: 98.00, speed: 600, label: "Вариант 13: Мягкий суб-бас" },
+    "14": { type: "triangle", freq: 146.83, speed: 500, label: "Вариант 14: Теплый тон" },
+    "15": { type: "triangle", freq: 220.00, speed: 450, label: "Вариант 15: Глубокое Ля" },
+    "16": { type: "triangle", freq: 349.23, speed: 400, label: "Вариант 16: Спокойный Фа" },
+    "17": { type: "triangle", freq: 523.25, speed: 300, label: "Вариант 17: Чистый высокий тон" },
+    "18": { type: "triangle", freq: 698.46, speed: 350, label: "Вариант 18: Колокольчик треугольника" },
 
-        .cover.playing {
-            animation: rotate 4s linear infinite;
-        }
+    // === СЕКЦИЯ 4: ЧИСТЫЙ СИНУС (Синусоида / Sine) ===
+    "19": { type: "sine", freq: 120.00, speed: 400, label: "Вариант 19: Акустический гул" },
+    "20": { type: "sine", freq: 180.00, speed: 500, label: "Вариант 20: Эмбиент бас" },
+    "21": { type: "sine", freq: 240.00, speed: 450, label: "Вариант 21: Камертон 240Гц" },
+    "22": { type: "sine", freq: 360.00, speed: 350, label: "Вариант 22: Фоновое колебание" },
+    "23": { type: "sine", freq: 480.00, speed: 300, label: "Вариант 23: Сигнал уведомления" },
+    "24": { type: "sine", freq: 720.00, speed: 200, label: "Вариант 24: Свист синуса" },
 
-        .cover-inner {
-            width: 40px;
-            height: 40px;
-            background: #0d1117;
-            border-radius: 50%;
-        }
+    // === СЕКЦИЯ 5: ЭКСТРЕМАЛЬНЫЕ ТЕСТЫ (Ультра-частоты) ===
+    "25": { type: "sawtooth", freq: 65.41, speed: 600, label: "Вариант 25: Предельный бас пилы" },
+    "26": { type: "square", freq: 82.41, speed: 500, label: "Вариант 26: Низкий гудящий квадрат" },
+    "27": { type: "sine", freq: 1000.00, speed: 150, label: "Вариант 27: Тестовый писк 1кГц" },
+    "28": { type: "triangle", freq: 1200.00, speed: 200, label: "Вариант 28: Высокий кристалл" },
+    "29": { type: "sine", freq: 1500.00, speed: 250, label: "Вариант 29: Ультра-сигнал" },
+    "30": { type: "square", freq: 2000.00, speed: 100, label: "Вариант 30: Предельный лазер" }
+};
 
-        h2 {
-            font-size: 18px;
-            margin: 0 0 5px;
-            color: #fff;
-        }
+const triggerBtn = document.getElementById('trigger-btn');
+const disc = document.getElementById('disc');
+const nowPlaying = document.getElementById('now-playing');
+const playlistContainer = document.getElementById('playlist');
 
-        .author {
-            font-size: 14px;
-            color: #8b949e;
-            margin-bottom: 25px;
-        }
+let isPlaying = false;
+let activeTrackId = "1";
+let audioCtx = null;
+let soundInterval = null;
 
-        /* Кнопка Play */
-        .play-btn {
-            background: #238636;
-            color: #fff;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
-            margin-bottom: 20px;
-        }
-
-        .play-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .play-btn.playing {
-            background: #da3637;
-            box-shadow: 0 4px 12px rgba(218, 54, 55, 0.4);
-        }
-
-        /* Ползунок громкости */
-        .volume-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        .volume-slider {
-            width: 150px;
-            cursor: pointer;
-        }
-
-        /* Список треков с четкой обводкой */
-        .track-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border-top: 1px solid #30363d;
-            padding-top: 20px;
-        }
-
-        .track-item {
-            background: #21262d;
-            color: #c9d1d9;
-            border: 2px solid transparent; /* Заготовка под обводку */
-            padding: 12px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            transition: all 0.2s ease;
-        }
-
-        .track-item:hover {
-            background: #30363d;
-        }
-
-        /* Активное состояние — ЧЕТКАЯ ОБВОДКА */
-        .track-item.active {
-            border-color: #58a6ff !important;
-            background: rgba(88, 166, 255, 0.1);
-            color: #58a6ff;
-            font-weight: 600;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="player-container">
-        <!-- Обложка -->
-        <div id="cover" class="cover">
-            <div class="cover-inner"></div>
+// Автоматическая генерация 30 треков в интерфейсе
+function buildPlaylist() {
+    playlistContainer.innerHTML = Object.keys(soundDatabase).map(id => `
+        <div class="track ${id === '1' ? 'active' : ''}" data-id="${id}">
+            🎵 ${soundDatabase[id].label}
         </div>
+    `).join('');
 
-        <!-- Информация о треке -->
-        <h2 id="track-title">Ночной Эмбиент</h2>
-        <div class="author">Встроенный синтезатор звука</div>
+    // Навешиваем клики на новые элементы
+    document.querySelectorAll('.track').forEach(track => {
+        track.addEventListener('click', function() {
+            document.querySelectorAll('.track').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
 
-        <!-- Кнопка управления -->
-        <button id="play-btn" class="play-btn">PLAY</button>
+            activeTrackId = this.getAttribute('data-id');
+            nowPlaying.innerText = "Текущий трек: " + soundDatabase[activeTrackId].label;
 
-        <!-- Контроль громкости -->
-        <div class="volume-container">
-            <span>🔈</span>
-            <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
-            <span>🔊</span>
-        </div>
-
-        <!-- Интерактивный плейлист -->
-        <div class="track-list">
-            <div class="track-item active" data-track="ambient">✨ Мелодия 1: Ночной Эмбиент</div>
-            <div class="track-item" data-track="waves">🎹 Мелодия 2: Глубокие Клавиши</div>
-            <div class="track-item" data-track="space">🚀 Мелодия 3: Космический Пульс</div>
-        </div>
-    </div>
-
-    <script>
-        const playBtn = document.getElementById('play-btn');
-        const cover = document.getElementById('cover');
-        const trackTitle = document.getElementById('track-title');
-        const volumeSlider = document.getElementById('volume');
-        const trackItems = document.querySelectorAll('.track-item');
-
-        let isPlaying = false;
-        let currentTrack = 'ambient';
-        let audioCtx = null;
-        let mainVolume = null;
-        let soundInterval = null;
-
-        // Инициализация Web Audio API
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            mainVolume = audioCtx.createGain();
-            mainVolume.gain.setValueAtTime(volumeSlider.value, audioCtx.currentTime); 
-            mainVolume.connect(audioCtx.destination);
-        }
-
-        // Чистая генерация музыкальных нот (музыка из кода без багов)
-        function playTone(freq, type, duration) {
-            if (!audioCtx || !isPlaying) return;
-            
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            
-            gainNode.gain.setValueAtTime(mainVolume.gain.value * 0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        // Музыкальные циклы плеера
-        function startMusicLoop() {
-            clearInterval(soundInterval);
-            if (!isPlaying) return;
-
-            if (currentTrack === 'ambient') {
-                const chord = [261.63, 329.63, 392.00, 493.88]; // Красивый аккорд Cmaj7
-                soundInterval = setInterval(() => {
-                    const note = chord[Math.floor(Math.random() * chord.length)];
-                    playTone(note, 'sine', 1.5);
-                }, 600);
-            } 
-            else if (currentTrack === 'waves') {
-                const chord = [196.00, 246.94, 293.66, 369.99]; // Меланхоличный Gmaj7 в басу
-                soundInterval = setInterval(() => {
-                    const note = chord[Math.floor(Math.random() * chord.length)];
-                    playTone(note, 'triangle', 2.0);
-                }, 1000);
-            } 
-            else if (currentTrack === 'space') {
-                const sequence = [110.00, 220.00, 165.00, 330.00]; // Пульсирующий арпеджио
-                let step = 0;
-                soundInterval = setInterval(() => {
-                    playTone(sequence[step % sequence.length], 'sine', 0.4);
-                    step++;
-                }, 300);
-            }
-        }
-
-        function stopMusicLoop() {
-            clearInterval(soundInterval);
-        }
-
-        // Переключение состояний Play / Pause
-        function togglePlay() {
-            initAudio();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            if (!isPlaying) {
-                isPlaying = true;
-                playBtn.innerText = 'PAUSE';
-                playBtn.classList.add('playing');
-                cover.classList.add('playing');
-                startMusicLoop();
-            } else {
-                isPlaying = false;
-                playBtn.innerText = 'PLAY';
-                playBtn.classList.remove('playing');
-                cover.classList.remove('playing');
-                stopMusicLoop();
-            }
-        }
-
-        playBtn.addEventListener('click', togglePlay);
-
-        // Изменение громкости на лету
-        volumeSlider.addEventListener('input', function() {
-            if (mainVolume) {
-                mainVolume.gain.setValueAtTime(this.value, audioCtx.currentTime);
+            if (isPlaying) {
+                runLoop();
+                playSoundStroke();
             }
         });
+    });
+}
 
-        // Клик по трекам из списка — ОБВОДКА ТЕПЕРЬ ПЕРЕХОДИТ
-        trackItems.forEach(item => {
-            item.addEventListener('click', function() {
-                // Снимаем класс active со всех треков
-                trackItems.forEach(t => t.classList.remove('active'));
-                
-                // Добавляем класс active на тот, по которому кликнули
-                this.classList.add('active');
+// Генерация звука на 100% громкости
+function playSoundStroke() {
+    if (!isPlaying || !audioCtx) return;
 
-                // Меняем текущий трек и заголовок
-                currentTrack = this.getAttribute('data-track');
-                trackTitle.innerText = this.innerText.substring(11); // Убираем эмодзи из заголовка
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
 
-                if (isPlaying) {
-                    startMusicLoop();
-                }
-            });
-        });
-    </script>
-</body>
-</html>
-                
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    // Устанавливаем 100% громкость звукового узла
+    gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+    const trackConfig = soundDatabase[activeTrackId] || soundDatabase["1"];
+    
+    osc.type = trackConfig.type;
+    osc.frequency.setValueAtTime(trackConfig.freq, audioCtx.currentTime);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+}
+
+function runLoop() {
+    clearInterval(soundInterval);
+    if (!isPlaying) return;
+    
+    const trackConfig = soundDatabase[activeTrackId] || soundDatabase["1"];
+    soundInterval = setInterval(playSoundStroke, trackConfig.speed);
+}
+
+// Логика кнопки управления
+triggerBtn.addEventListener('click', function() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    if (!isPlaying) {
+        isPlaying = true;
+        this.innerText = 'ПАУЗА';
+        this.classList.add('active');
+        disc.classList.add('playing');
+        runLoop();
+        playSoundStroke();
+    } else {
+        isPlaying = false;
+        this.innerText = 'ВКЛЮЧИТЬ ЗВУК';
+        this.classList.remove('active');
+        disc.classList.remove('playing');
+        clearInterval(soundInterval);
+    }
+});
+
+// Инициализация при загрузке
+buildPlaylist();
+           
