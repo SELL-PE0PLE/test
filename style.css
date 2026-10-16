@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    background: #0d1117;
+    background: #090d16;
     color: #c9d1d9;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     display: flex;
@@ -10,125 +10,102 @@ body {
 }
 
 .player {
-    background: #161b22;
+    background: #111622;
     padding: 30px;
-    border-radius: 16px;
-    border: 1px solid #30363d;
+    border-radius: 24px;
+    border: 1px solid #212635;
     width: 320px;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
 }
 
 .disc {
-    width: 120px;
-    height: 120px;
-    background: linear-gradient(45deg, #21262d, #30363d);
-    border: 4px solid #30363d;
+    width: 130px;
+    height: 130px;
+    background: linear-gradient(45deg, #1b2234, #1f293d);
+    border: 4px solid #28334a;
     border-radius: 50%;
-    margin: 0 auto 20px;
+    margin: 0 auto 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s ease;
 }
 
 .disc.playing {
-    animation: spin 3s linear infinite;
-    background: linear-gradient(45deg, #1f6feb, #238636);
+    animation: spin 10s linear infinite; /* Очень медленное, успокаивающее вращение */
+    background: linear-gradient(45deg, #388bfd, #58a6ff);
     border-color: #58a6ff;
 }
 
 .center-hole {
-    width: 30px;
-    height: 30px;
-    background: #0d1117;
+    width: 35px;
+    height: 35px;
+    background: #090d16;
     border-radius: 50%;
 }
 
 h2 {
     font-size: 16px;
-    margin: 0 0 20px 0;
+    margin: 0 0 25px 0;
     color: #fff;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.controls {
-    margin-bottom: 25px;
+    font-weight: 500;
 }
 
 .main-btn {
-    background: #238636;
+    background: #1f6feb;
     color: #fff;
     border: none;
-    padding: 14px 0;
+    padding: 15px 0;
     width: 100%;
     font-size: 16px;
     font-weight: bold;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
-    transition: background 0.2s;
+    box-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+    transition: all 0.2s ease;
 }
 
 .main-btn.active {
     background: #da3637;
-    box-shadow: 0 4px 12px rgba(218, 54, 55, 0.3);
+    box-shadow: 0 4px 15px rgba(218, 54, 55, 0.3);
 }
 
-/* Компактный плейлист для 30 вариантов со скроллбаром */
 .playlist {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    border-top: 1px solid #30363d;
-    padding-top: 20px;
-    max-height: 260px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* Стилизация скроллбара */
-.playlist::-webkit-scrollbar {
-    width: 6px;
-}
-.playlist::-webkit-scrollbar-track {
-    background: #161b22;
-}
-.playlist::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 3px;
+    gap: 10px;
+    border-top: 1px solid #212635;
+    margin-top: 25px;
+    padding-top: 22px;
 }
 
 .track {
-    background: #21262d;
-    padding: 10px 12px;
-    border-radius: 6px;
+    background: #171e2e;
+    padding: 14px;
+    border-radius: 10px;
     cursor: pointer;
     text-align: left;
-    font-size: 13px;
+    font-size: 14px;
     border: 2px solid transparent; 
-    transition: all 0.15s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+    color: #8b949e;
 }
 
 .track:hover {
-    background: #30363d;
+    background: #21293d;
+    color: #c9d1d9;
 }
 
-/* Железобетонная синяя обводка активного трека */
+/* Мягкая синяя обводка активного расслабляющего трека */
 .track.active {
     border-color: #58a6ff !important;
-    background: rgba(88, 166, 255, 0.1);
+    background: rgba(88, 166, 255, 0.08);
     color: #58a6ff;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-    }
+}
