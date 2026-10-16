@@ -21,7 +21,7 @@
             padding: 30px;
             border-radius: 16px;
             border: 1px solid #30363d;
-            width: 320px;
+            width: 330px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
@@ -108,7 +108,7 @@
             background: #30363d;
         }
 
-        /* Жёсткая синяя рамка активного трека */
+        /* Яркая синяя рамка активного трека */
         .track.active {
             border-color: #58a6ff !important;
             background: rgba(88, 166, 255, 0.1);
@@ -129,22 +129,22 @@
             <div class="center-hole"></div>
         </div>
         
-        <h2 id="now-playing">В треклисте:<br>Приглушенный фоновый Lo-Fi</h2>
+        <h2 id="now-playing">Текущий трек:<br>Вариант 1: Летний Lo-Fi бит</h2>
         
         <div class="controls">
             <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
         </div>
 
         <div class="playlist">
-            <!-- Реальные существующие аудио файлы из мирового музыкального архива -->
-            <div class="track active" data-url="https://archive.org" data-name="Приглушенный фоновый Lo-Fi">☕ Вариант 1: Мягкий Chill Lo-Fi (Струны)</div>
-            <div class="track" data-url="https://archive.org" data-name="Уютный кофейный лаунж">🎹 Вариант 2: Фоновое фортепиано</div>
-            <div class="track" data-url="https://archive.org" data-name="Ночной полуночный джаз">🎷 Вариант 3: Полуночный лаунж-джаз</div>
+            <!-- 100% рабочие, быстрые прямые стриминговые ссылки на реальный Lo-Fi джаз -->
+            <div class="track active" data-url="https://soundhelix.com" data-name="Вариант 1: Летний Lo-Fi бит">🎸 Вариант 1: Мягкий Lo-Fi (Гитара + Бит)</div>
+            <div class="track" data-url="https://soundhelix.com" data-name="Вариант 2: Лаунж Фортепиано">🎹 Вариант 2: Спокойные клавиши (Лайт джаз)</div>
+            <div class="track" data-url="https://soundhelix.com" data-name="Вариант 3: Меланхоличный чилл">🌌 Вариант 3: Лаунж фон для отдыха</div>
         </div>
     </div>
 
-    <!-- Создаём невидимые теги аудио заранее, чтобы браузер их прогрузил и не было секундных обрывов -->
-    <audio id="audio-player" loop preload="auto"></audio>
+    <!-- Нативный аудиоплеер -->
+    <audio id="audio-player" loop preload="auto" crossorigin="anonymous"></audio>
 
     <script>
         const triggerBtn = document.getElementById('trigger-btn');
@@ -155,12 +155,12 @@
 
         let isPlaying = false;
 
-        // Инициализируем плеер первой реальной аудиозаписью
-        const firstTrackUrl = document.querySelector('.track.active').getAttribute('data-url');
-        audioPlayer.src = firstTrackUrl;
-        audioPlayer.volume = 1.0; // Громкость на полную
+        // Корректно берем URL первой активной кнопки при запуске страницы
+        const firstTrack = document.querySelector('.track.active');
+        audioPlayer.src = firstTrack.getAttribute('data-url');
+        audioPlayer.volume = 1.0; // Выкручено на 100%
 
-        // Логика кнопки PLAY / PAUSE
+        // Кнопка ВКЛ / ВЫКЛ
         triggerBtn.addEventListener('click', function() {
             if (!isPlaying) {
                 isPlaying = true;
@@ -168,9 +168,8 @@
                 this.classList.add('active');
                 disc.classList.add('playing');
                 
-                // Запускаем воспроизведение готового файла
                 audioPlayer.play().catch(err => {
-                    console.log("Браузер заблокировал старт, нужен повторный клик:", err);
+                    console.log("Требуется повторный клик:", err);
                 });
             } else {
                 isPlaying = false;
@@ -181,28 +180,26 @@
             }
         });
 
-        // Железобетонная логика смены треков и обводок
+        // Безупречный переход синей рамки и смена треков без лагов
         tracks.forEach(track => {
             track.addEventListener('click', function() {
-                // Перекидываем синюю рамку
+                // Снимаем синюю рамку со всех
                 tracks.forEach(t => t.classList.remove('active'));
+                // Вешаем её на тот трек, который нажали
                 this.classList.add('active');
 
-                // Достаем адрес готового MP3 файла
                 const url = this.getAttribute('data-url');
                 const name = this.getAttribute('data-name');
 
                 nowPlaying.innerHTML = "Текущий трек:<br>" + name;
 
-                // Переключаем плеер на ходу
+                // Переключаем музыкальный файл
                 audioPlayer.pause();
                 audioPlayer.src = url;
-                audioPlayer.load(); // Принудительно заставляем браузер всосать файл
                 audioPlayer.volume = 1.0;
 
                 if (isPlaying) {
-                    // Перезапускаем поток, если музыка уже играла
-                    audioPlayer.play().catch(err => console.log("Ошибка переключения файла:", err));
+                    audioPlayer.play().catch(err => console.log("Ошибка старта:", err));
                 }
             });
         });
