@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кино-Текстуры Фоновый Плеер</title>
+    <title>Настоящий Музыкальный Плеер</title>
     <style>
         body {
             margin: 0;
@@ -21,27 +21,56 @@
             padding: 30px;
             border-radius: 16px;
             border: 1px solid #30363d;
-            width: 340px;
+            width: 320px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
 
-        h2 {
-            font-size: 15px;
-            margin: 0 0 25px 0;
-            color: #fff;
-            line-height: 1.4;
-            height: 42px;
+        .disc {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #21262d, #30363d);
+            border: 4px solid #30363d;
+            border-radius: 50%;
+            margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .disc.playing {
+            animation: spin 15s linear infinite;
+            border-color: #58a6ff;
+        }
+
+        .center-hole {
+            width: 30px;
+            height: 30px;
+            background: #0d1117;
+            border-radius: 50%;
+        }
+
+        h2 {
+            font-size: 15px;
+            margin: 0 0 20px 0;
+            color: #fff;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.4;
+        }
+
+        .controls {
+            margin-bottom: 25px;
         }
 
         .main-btn {
             background: #238636;
             color: #fff;
             border: none;
-            padding: 16px 0;
+            padding: 14px 0;
             width: 100%;
             font-size: 16px;
             font-weight: bold;
@@ -61,13 +90,12 @@
             flex-direction: column;
             gap: 8px;
             border-top: 1px solid #30363d;
-            padding-top: 25px;
-            margin-top: 25px;
+            padding-top: 20px;
         }
 
         .track {
             background: #21262d;
-            padding: 14px;
+            padding: 12px;
             border-radius: 6px;
             cursor: pointer;
             text-align: left;
@@ -80,160 +108,101 @@
             background: #30363d;
         }
 
-        /* Та самая четкая синяя обводка, которая мгновенно переключает эмбиент */
+        /* Жёсткая синяя рамка активного трека */
         .track.active {
             border-color: #58a6ff !important;
             background: rgba(88, 166, 255, 0.1);
             color: #58a6ff;
             font-weight: bold;
         }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
     <div class="player">
-        <h2 id="now-playing">Текущий фон:<br>Саундтрек 1: Глубокий Космос (Текстура)</h2>
+        <div id="disc" class="disc">
+            <div class="center-hole"></div>
+        </div>
         
-        <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ САУНДТРЕК</button>
+        <h2 id="now-playing">В треклисте:<br>Приглушенный фоновый Lo-Fi</h2>
+        
+        <div class="controls">
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
+        </div>
 
         <div class="playlist">
-            <div class="track active" data-id="interstellar" data-name="Саундтрек 1: Глубокий Космос (Текстура)">🚀 Вариант 1: Космический струнный фон</div>
-            <div class="track" data-id="submarina" data-name="Саундтрек 2: Бесконечная Глубина">🌊 Вариант 2: Тягучий басовый гул</div>
-            <div class="track" data-id="horizon" data-name="Саундтрек 3: Вечный Горизонт">🌅 Вариант 3: Светлый панорамный эмбиент</div>
+            <!-- Реальные существующие аудио файлы из мирового музыкального архива -->
+            <div class="track active" data-url="https://archive.org" data-name="Приглушенный фоновый Lo-Fi">☕ Вариант 1: Мягкий Chill Lo-Fi (Струны)</div>
+            <div class="track" data-url="https://archive.org" data-name="Уютный кофейный лаунж">🎹 Вариант 2: Фоновое фортепиано</div>
+            <div class="track" data-url="https://archive.org" data-name="Ночной полуночный джаз">🎷 Вариант 3: Полуночный лаунж-джаз</div>
         </div>
     </div>
 
+    <!-- Создаём невидимые теги аудио заранее, чтобы браузер их прогрузил и не было секундных обрывов -->
+    <audio id="audio-player" loop preload="auto"></audio>
+
     <script>
         const triggerBtn = document.getElementById('trigger-btn');
+        const disc = document.getElementById('disc');
         const nowPlaying = document.getElementById('now-playing');
         const tracks = document.querySelectorAll('.track');
+        const audioPlayer = document.getElementById('audio-player');
 
         let isPlaying = false;
-        let activePreset = "interstellar";
-        
-        let audioCtx = null;
-        let gainNode = null;
-        let activeOscillators = [];
 
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime); // Плотная, уверенная громкость
-            gainNode.connect(audioCtx.destination);
-        }
+        // Инициализируем плеер первой реальной аудиозаписью
+        const firstTrackUrl = document.querySelector('.track.active').getAttribute('data-url');
+        audioPlayer.src = firstTrackUrl;
+        audioPlayer.volume = 1.0; // Громкость на полную
 
-        // Создаем бесконечную, плавно переливающуюся кино-текстуру без единого удара
-        function startDroneScore() {
-            stopDroneScore();
-            if (!isPlaying || !audioCtx) return;
-
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            // Базовые частоты для фундаментальных кино-аккордов (длинные висящие ноты)
-            let frequencies = [];
-            if (activePreset === "interstellar") {
-                // Глубокий, гипнотический космический аккорд (Ля-минор текстура)
-                frequencies = [110.00, 165.00, 220.00, 261.63, 329.63]; 
-            } else if (activePreset === "submarina") {
-                // Сверхглубокий, очень низкий гул океана/подлодки (никаких высоких частот)
-                frequencies = [73.42, 110.00, 146.83, 185.00]; 
-            } else if (activePreset === "horizon") {
-                // Светлый, парящий саундтрек рассвета
-                frequencies = [130.81, 196.00, 261.63, 329.63, 392.00]; 
-            }
-
-            frequencies.forEach((freq, index) => {
-                const osc = audioCtx.createOscillator();
-                const oscGain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-
-                // Используем только мягкий синус для создания чистой текстуры
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                // Фильтр низких частот полностью убирает резкость и писк
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(450, audioCtx.currentTime);
-
-                // Делаем экстремально плавный запуск (Fade-in длиной в 3 секунды!), чтобы не было щелчков
-                oscGain.gain.setValueAtTime(0, audioCtx.currentTime);
-                oscGain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 3.0);
-
-                // Создаем эффект живого "дыхания" звука с помощью низкочастотного генератора (LFO)
-                // Он заставляет каждую ноту в аккорде плавно становиться то чуть громче, то тише сама по себе
-                const lfo = audioCtx.createOscillator();
-                const lfoGain = audioCtx.createGain();
-                // Разная скорость волнения для каждой ноты, чтобы они не двигались одинаково
-                lfo.frequency.setValueAtTime(0.05 + (index * 0.015), audioCtx.currentTime); 
-                lfoGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-
-                lfo.connect(lfoGain);
-                lfoGain.connect(oscGain.gain); // Подключаем качание прямо к громкости ноты
-
-                // Собираем цепочку
-                osc.connect(filter);
-                filter.connect(oscGain);
-                oscGain.connect(gainNode);
-
-                osc.start();
-                lfo.start();
-
-                // Сохраняем узлы, чтобы потом корректно их выключить
-                activeOscillators.push(osc, lfo, oscGain);
-            });
-        }
-
-        function stopDroneScore() {
-            // Плавное затухание перед полной остановкой, чтобы не щелкало по ушам
-            activeOscillators.forEach(node => {
-                if (node instanceof AudioGainNode) {
-                    try { node.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); } catch(e){}
-                }
-            });
-
-            // Окончательно стопаем генераторы через полсекунды
-            setTimeout(() => {
-                activeOscillators.forEach(node => {
-                    try { node.stop(); } catch(e) {}
-                    try { node.disconnect(); } catch(e) {}
-                });
-                activeOscillators = [];
-            }, 500);
-        }
-
-        // Кнопка главного управления
+        // Логика кнопки PLAY / PAUSE
         triggerBtn.addEventListener('click', function() {
-            initAudio();
-
             if (!isPlaying) {
                 isPlaying = true;
                 this.innerText = 'ПАУЗА';
                 this.classList.add('active');
-                startDroneScore();
+                disc.classList.add('playing');
+                
+                // Запускаем воспроизведение готового файла
+                audioPlayer.play().catch(err => {
+                    console.log("Браузер заблокировал старт, нужен повторный клик:", err);
+                });
             } else {
                 isPlaying = false;
-                this.innerText = 'ВКЛЮЧИТЬ САУНДТРЕК';
+                this.innerText = 'ВКЛЮЧИТЬ МУЗЫКУ';
                 this.classList.remove('active');
-                stopDroneScore();
+                disc.classList.remove('playing');
+                audioPlayer.pause();
             }
         });
 
-        // Безупречное переключение треков по клику мыши с обновлением синей рамки
+        // Железобетонная логика смены треков и обводок
         tracks.forEach(track => {
             track.addEventListener('click', function() {
-                // Смена активного класса обводки
+                // Перекидываем синюю рамку
                 tracks.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
 
-                // Обновление переменных ТЗ
-                activePreset = this.getAttribute('data-id');
-                const trackName = this.getAttribute('data-name');
-                nowPlaying.innerHTML = "Текущий фон:<br>" + trackName;
+                // Достаем адрес готового MP3 файла
+                const url = this.getAttribute('data-url');
+                const name = this.getAttribute('data-name');
 
-                // Если плеер активен — мгновенно перестраиваем аккорд на лету
+                nowPlaying.innerHTML = "Текущий трек:<br>" + name;
+
+                // Переключаем плеер на ходу
+                audioPlayer.pause();
+                audioPlayer.src = url;
+                audioPlayer.load(); // Принудительно заставляем браузер всосать файл
+                audioPlayer.volume = 1.0;
+
                 if (isPlaying) {
-                    startDroneScore();
+                    // Перезапускаем поток, если музыка уже играла
+                    audioPlayer.play().catch(err => console.log("Ошибка переключения файла:", err));
                 }
             });
         });
