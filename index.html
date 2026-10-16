@@ -3,30 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Релакс Эмбиент Плеер</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Тестовый Аудио Плеер</title>
+    <style>
+        /* Стильный темный фон в стиле GitHub */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Контейнер плеера */
+        .player-container {
+            background: #161b22;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            width: 380px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+
+        /* Обертка для фрейма, чтобы скруглить ему углы */
+        .iframe-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            height: 352px;
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="player">
-        <div id="disc" class="disc">
-            <div class="center-hole"></div>
-        </div>
+    <div class="player-container">
+        <h2>Релакс Стенд</h2>
+        <div class="subtitle">Тестирование качественного живого звука</div>
         
-        <h2 id="now-playing">Текущий трек: ✨ Медитация и Покой</h2>
-        
-        <div class="controls">
-            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
-        </div>
-
-        <!-- Красивый релакс-плейлист -->
-        <div class="playlist">
-            <div class="track active" data-id="relax">✨ Вариант 1: Медитация и Покой</div>
-            <div class="track" data-id="piano">🎹 Вариант 2: Вечернее Фортепиано</div>
-            <div class="track" data-id="space">🌌 Вариант 3: Глубокий Космос</div>
+        <div class="iframe-wrapper">
+            <!-- Официальный проверенный аудио-фрейм со спокойной музыкой -->
+            <iframe 
+                src="https://spotify.com" 
+                frameBorder="0" 
+                allowfullscreen="" 
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                loading="lazy">
+            </iframe>
         </div>
     </div>
 
-    <script src="script.js"></script>
 </body>
 </html>
