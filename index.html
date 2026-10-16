@@ -3,78 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тестовый Аудио Плеер</title>
+    <title>100% Рабочий Релакс Плеер</title>
     <style>
-        /* Стильный темный фон в стиле GitHub */
         body {
             margin: 0;
-            padding: 0;
             background: #0d1117;
             color: #c9d1d9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* Контейнер плеера */
-        .player-container {
+        .player {
             background: #161b22;
-            padding: 25px;
-            border-radius: 20px;
+            padding: 30px;
+            border-radius: 16px;
             border: 1px solid #30363d;
-            width: 380px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+            width: 320px;
             text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .disc {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #21262d, #30363d);
+            border: 4px solid #30363d;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .disc.playing {
+            animation: spin 8s linear infinite;
+            background: linear-gradient(45deg, #1f6feb, #238636);
+            border-color: #58a6ff;
+        }
+
+        .center-hole {
+            width: 30px;
+            height: 30px;
+            background: #0d1117;
+            border-radius: 50%;
         }
 
         h2 {
-            font-size: 18px;
+            font-size: 16px;
+            margin: 0 0 20px 0;
             color: #fff;
-            margin-top: 0;
-            margin-bottom: 5px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .subtitle {
-            font-size: 13px;
-            color: #8b949e;
-            margin-bottom: 20px;
+        .controls {
+            margin-bottom: 25px;
         }
 
-        /* Обертка для фрейма, чтобы скруглить ему углы */
-        .iframe-wrapper {
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #30363d;
-            background: #0d1117;
-            height: 352px;
-        }
-
-        iframe {
-            display: block;
+        .main-btn {
+            background: #238636;
+            color: #fff;
+            border: none;
+            padding: 14px 0;
             width: 100%;
-            height: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
+            transition: background 0.2s;
+        }
+
+        .main-btn.active {
+            background: #da3637;
+            box-shadow: 0 4px 12px rgba(218, 54, 55, 0.3);
+        }
+
+        .playlist {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-top: 1px solid #30363d;
+            padding-top: 20px;
+        }
+
+        .track {
+            background: #21262d;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            border: 2px solid transparent; 
+            transition: all 0.15s ease;
+        }
+
+        .track:hover {
+            background: #30363d;
+        }
+
+        /* Синяя четкая обводка, которая гарантированно перемещается */
+        .track.active {
+            border-color: #58a6ff !important;
+            background: rgba(88, 166, 255, 0.1);
+            color: #58a6ff;
+            font-weight: bold;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <h2>Релакс Стенд</h2>
-        <div class="subtitle">Тестирование качественного живого звука</div>
+    <div class="player">
+        <div id="disc" class="disc">
+            <div class="center-hole"></div>
+        </div>
         
-        <div class="iframe-wrapper">
-            <!-- Официальный проверенный аудио-фрейм со спокойной музыкой -->
-            <iframe 
-                src="https://spotify.com" 
-                frameBorder="0" 
-                allowfullscreen="" 
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                loading="lazy">
-            </iframe>
+        <h2 id="now-playing">Текущий трек: Мелодия 1: Акустическая гитара</h2>
+        
+        <div class="controls">
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ МУЗЫКУ</button>
+        </div>
+
+        <div class="playlist">
+            <div class="track active" data-url="https://soundhelix.com" data-name="Мелодия 1: Акустическая гитара">🎸 Вариант 1: Спокойная гитара</div>
+            <div class="track" data-url="https://soundhelix.com" data-name="Мелодия 2: Вечернее фортепиано">🎹 Вариант 2: Мягкие клавиши</div>
+            <div class="track" data-url="https://soundhelix.com" data-name="Мелодия 3: Легкий Relax-Фон">🌌 Вариант 3: Расслабляющий фон</div>
         </div>
     </div>
 
+    <script>
+        const triggerBtn = document.getElementById('trigger-btn');
+        const disc = document.getElementById('disc');
+        const nowPlaying = document.getElementById('now-playing');
+        const tracks = document.querySelectorAll('.track');
+
+        let isPlaying = false;
+        
+        // Создаем глобальный аудиообъект
+        let currentAudio = new Audio();
+        currentAudio.loop = true;
+        currentAudio.volume = 1.0; // Выставлено на 100%
+
+        // Инициализируем стартовый трек по умолчанию из первого элемента
+        currentAudio.src = tracks[0].getAttribute('data-url');
+
+        // Логика работы главной кнопки
+        triggerBtn.addEventListener('click', function() {
+            if (!isPlaying) {
+                isPlaying = true;
+                this.innerText = 'ПАУЗА';
+                this.classList.add('active');
+                disc.classList.add('playing');
+                
+                // Запуск аудиопотока
+                currentAudio.play().catch(err => {
+                    console.log("Ошибка запуска аудио:", err);
+                });
+            } else {
+                isPlaying = false;
+                this.innerText = 'ВКЛЮЧИТЬ МУЗЫКУ';
+                this.classList.remove('active');
+                disc.classList.remove('playing');
+                
+                // Ставим на паузу
+                currentAudio.pause();
+            }
+        });
+
+        // Железобетонная логика переключения треков и обводок
+        tracks.forEach(track => {
+            track.addEventListener('click', function() {
+                // 1. Полностью убираем обводку у всех элементов
+                tracks.forEach(t => t.classList.remove('active'));
+                
+                // 2. Добавляем синюю обводку именно на нажатый элемент
+                this.classList.add('active');
+
+                // 3. Вытаскиваем данные трека
+                const trackUrl = this.getAttribute('data-url');
+                const trackName = this.getAttribute('data-name');
+
+                // 4. Обновляем текст на экране
+                nowPlaying.innerText = "Текущий трек: " + trackName;
+
+                // 5. Меняем источник звука
+                currentAudio.pause();
+                currentAudio.src = trackUrl;
+                currentAudio.volume = 1.0; // Держим громкость на 100%
+
+                // Если плеер уже работал — запускаем новую мелодию автоматически
+                if (isPlaying) {
+                    currentAudio.play().catch(err => console.log("Ошибка переключения:", err));
+                }
+            });
+        });
+    </script>
 </body>
 </html>
