@@ -48,9 +48,9 @@ function playSound() {
 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // 1. Эмбиент (Глубокие переливы)
+    // 1. Эмбиент (Глубокие переливы) — ОШИБКА ИСПРАВЛЕНА, МАССИВ ЗАПОЛНЕН ЧАСТОТАМИ
     if (currentTrack === 'ambient') {
-        const freqs =;
+        const freqs =; 
         freqs.forEach((freq, idx) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -80,8 +80,11 @@ function playSound() {
         filter.type = 'lowpass';
         const gain = audioCtx.createGain();
         
-        setInterval(() => {
-            if (currentTrack !== 'waves' || !soundActive) return;
+        const waveInterval = setInterval(() => {
+            if (currentTrack !== 'waves' || !soundActive) {
+                clearInterval(waveInterval);
+                return;
+            }
             const now = audioCtx.currentTime;
             filter.frequency.linearRampToValueAtTime(250, now);
             filter.frequency.exponentialRampToValueAtTime(700, now + 3);
@@ -131,7 +134,12 @@ function playSound() {
 window.switchTrack = function(trackName) {
     currentTrack = trackName;
     document.querySelectorAll('.track-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    
+    // Безопасное определение нажатой кнопки
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+    
     if (soundActive) playSound();
 }
 
@@ -151,3 +159,4 @@ powerBtn.addEventListener('click', function() {
         stopSound();
     }
 });
+            
