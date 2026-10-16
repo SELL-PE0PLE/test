@@ -3,71 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ohhh — Telegram Widget</title>
-    <style>
-        /* Базовые стили для красивого отображения в стиле Ohhh */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #121212; /* Глубокий темный фон */
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 550px; /* Оптимальная ширина для поста Telegram */
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 900;
-            margin-bottom: 5px;
-            letter-spacing: -1px;
-        }
-
-        p {
-            color: #888888;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
-        }
-
-        /* Контейнер для самого виджета */
-        .widget-wrapper {
-            width: 100%;
-            background: #1e1e1e;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-    </style>
+    <title>Тест Аудио-Движка</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <h1>Ohhh</h1>
-        <p>Официальный виджет вашего Telegram-канала</p>
+    <div class="audio-tester">
+        <h1>Тестирование звука (Синтезатор)</h1>
         
-        <!-- Оболочка для правильного позиционирования и адаптивности виджета -->
-        <div class="widget-wrapper">
-            <script async src="https://telegram.org/js/telegram-widget.js?24" 
-                    data-telegram-post="empty0_0channel/3" 
-                    data-width="100%" 
-                    data-userpic="false" 
-                    data-color="343638" 
-                    data-dark="1" 
-                    data-dark-color="FFFFFF">
-            </script>
+        <!-- Главная кнопка Вкл/Выкл -->
+        <button id="power-btn" class="power-btn">ВКЛЮЧИТЬ ЗВУК</button>
+
+        <!-- Выбор звуковых пресетов -->
+        <div class="playlist">
+            <button class="track-btn active" onclick="switchTrack('ambient')">✨ Космический Эмбиент</button>
+            <button class="track-btn" onclick="switchTrack('waves')">🌊 Морские волны</button>
+            <button class="track-btn" onclick="switchTrack('rain')">🌧️ Мягкий дождь</button>
+            <button class="track-btn" onclick="switchTrack('birds')">🐦 Лесные птицы</button>
         </div>
     </div>
 
+    <script src="script.js"></script>
 </body>
 </html>
