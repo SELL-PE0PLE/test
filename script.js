@@ -1,138 +1,110 @@
-// База данных из 30 вариантов звука для стресс-теста аудиосистем
-const soundDatabase = {
-    // === СЕКЦИЯ 1: ЧИСТЫЕ СИГНАЛЫ (Пила / Sawtooth) ===
-    "1": { type: "sawtooth", freq: 110.00, speed: 400, label: "Вариант 1: Суб-бас пила" },
-    "2": { type: "sawtooth", freq: 220.00, speed: 350, label: "Вариант 2: Низкая пила" },
-    "3": { type: "sawtooth", freq: 293.66, speed: 400, label: "Вариант 3: Классический лид Ре" },
-    "4": { type: "sawtooth", freq: 440.00, speed: 300, label: "Вариант 4: Стандартный тон Ля" },
-    "5": { type: "sawtooth", freq: 587.33, speed: 250, label: "Вариант 5: Высокая пила" },
-    "6": { type: "sawtooth", freq: 880.00, speed: 200, label: "Вариант 6: Пронзительный зуммер" },
-
-    // === СЕКЦИЯ 2: ПЛОТНЫЕ ИМПУЛЬСЫ (Квадрат / Square) ===
-    "7": { type: "square", freq: 130.81, speed: 500, label: "Вариант 7: Басовый квадрат" },
-    "8": { type: "square", freq: 196.00, speed: 400, label: "Вариант 8: Ретро Пульс Соль" },
-    "9": { type: "square", freq: 261.63, speed: 300, label: "Вариант 9: 8-битное До" },
-    "10": { type: "square", freq: 329.63, speed: 350, label: "Вариант 10: Аркадный Ми" },
-    "11": { type: "square", freq: 493.88, speed: 250, label: "Вариант 11: Высокий информер" },
-    "12": { type: "square", freq: 659.25, speed: 150, label: "Вариант 12: Быстрый чиптюн-клик" },
-
-    // === СЕКЦИЯ 3: МЯГКИЕ ТОНА (Треугольник / Triangle) ===
-    "13": { type: "triangle", freq: 98.00, speed: 600, label: "Вариант 13: Мягкий суб-бас" },
-    "14": { type: "triangle", freq: 146.83, speed: 500, label: "Вариант 14: Теплый тон" },
-    "15": { type: "triangle", freq: 220.00, speed: 450, label: "Вариант 15: Глубокое Ля" },
-    "16": { type: "triangle", freq: 349.23, speed: 400, label: "Вариант 16: Спокойный Фа" },
-    "17": { type: "triangle", freq: 523.25, speed: 300, label: "Вариант 17: Чистый высокий тон" },
-    "18": { type: "triangle", freq: 698.46, speed: 350, label: "Вариант 18: Колокольчик треугольника" },
-
-    // === СЕКЦИЯ 4: ЧИСТЫЙ СИНУС (Синусоида / Sine) ===
-    "19": { type: "sine", freq: 120.00, speed: 400, label: "Вариант 19: Акустический гул" },
-    "20": { type: "sine", freq: 180.00, speed: 500, label: "Вариант 20: Эмбиент бас" },
-    "21": { type: "sine", freq: 240.00, speed: 450, label: "Вариант 21: Камертон 240Гц" },
-    "22": { type: "sine", freq: 360.00, speed: 350, label: "Вариант 22: Фоновое колебание" },
-    "23": { type: "sine", freq: 480.00, speed: 300, label: "Вариант 23: Сигнал уведомления" },
-    "24": { type: "sine", freq: 720.00, speed: 200, label: "Вариант 24: Свист синуса" },
-
-    // === СЕКЦИЯ 5: ЭКСТРЕМАЛЬНЫЕ ТЕСТЫ (Ультра-частоты) ===
-    "25": { type: "sawtooth", freq: 65.41, speed: 600, label: "Вариант 25: Предельный бас пилы" },
-    "26": { type: "square", freq: 82.41, speed: 500, label: "Вариант 26: Низкий гудящий квадрат" },
-    "27": { type: "sine", freq: 1000.00, speed: 150, label: "Вариант 27: Тестовый писк 1кГц" },
-    "28": { type: "triangle", freq: 1200.00, speed: 200, label: "Вариант 28: Высокий кристалл" },
-    "29": { type: "sine", freq: 1500.00, speed: 250, label: "Вариант 29: Ультра-сигнал" },
-    "30": { type: "square", freq: 2000.00, speed: 100, label: "Вариант 30: Предельный лазер" }
-};
-
 const triggerBtn = document.getElementById('trigger-btn');
 const disc = document.getElementById('disc');
 const nowPlaying = document.getElementById('now-playing');
-const playlistContainer = document.getElementById('playlist');
+const tracks = document.querySelectorAll('.track');
 
 let isPlaying = false;
-let activeTrackId = "1";
+let activeTrackId = "relax";
 let audioCtx = null;
 let soundInterval = null;
 
-// Автоматическая генерация 30 треков в интерфейсе
-function buildPlaylist() {
-    playlistContainer.innerHTML = Object.keys(soundDatabase).map(id => `
-        <div class="track ${id === '1' ? 'active' : ''}" data-id="${id}">
-            🎵 ${soundDatabase[id].label}
-        </div>
-    `).join('');
-
-    // Навешиваем клики на новые элементы
-    document.querySelectorAll('.track').forEach(track => {
-        track.addEventListener('click', function() {
-            document.querySelectorAll('.track').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-
-            activeTrackId = this.getAttribute('data-id');
-            nowPlaying.innerText = "Текущий трек: " + soundDatabase[activeTrackId].label;
-
-            if (isPlaying) {
-                runLoop();
-                playSoundStroke();
-            }
-        });
-    });
+function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-// Генерация звука на 100% громкости
-function playSoundStroke() {
+// Генератор мягких, обволакивающих музыкальных нот
+function playSoftTone(freq, duration, volume = 0.2) {
     if (!isPlaying || !audioCtx) return;
 
     const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const gainNode = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
 
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
 
-    // Устанавливаем 100% громкость звукового узла
-    gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    // Только гладкая синусоида (sine), никаких резких пил!
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-    const trackConfig = soundDatabase[activeTrackId] || soundDatabase["1"];
-    
-    osc.type = trackConfig.type;
-    osc.frequency.setValueAtTime(trackConfig.freq, audioCtx.currentTime);
+    // Срезаем высокие частоты, делая звук максимально тёплым и глухим
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, audioCtx.currentTime);
+
+    // Плавное нарастание (Attack) и долгое, мягкое затухание (Release)
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.3);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.4);
+    osc.stop(audioCtx.currentTime + duration);
 }
 
-function runLoop() {
+// Музыкальные релакс-алгоритмы
+function runMusicLoop() {
     clearInterval(soundInterval);
     if (!isPlaying) return;
-    
-    const trackConfig = soundDatabase[activeTrackId] || soundDatabase["1"];
-    soundInterval = setInterval(playSoundStroke, trackConfig.speed);
+
+    if (activeTrackId === "relax") {
+        // Красивый, расслабляющий пятидольный аккорд (гармония покоя)
+        const notes = [261.63, 329.63, 392.00, 440.00, 523.25]; // До-Ми-Соль-Ля-До
+        soundInterval = setInterval(() => {
+            const randomNote = notes[Math.floor(Math.random() * notes.length)];
+            playSoftTone(randomNote, 3.0, 0.15); // Длинное звучание нот с наложением друг на друга
+        }, 1200);
+    } 
+    else if (activeTrackId === "piano") {
+        // Медленный перебор нот ночного фортепиано
+        const melody = [196.00, 246.94, 293.66, 392.00, 493.88]; // Соль-Си-Ре-Соль-Си
+        let step = 0;
+        soundInterval = setInterval(() => {
+            playSoftTone(melody[step % melody.length], 2.5, 0.2);
+            step++;
+        }, 1500);
+    } 
+    else if (activeTrackId === "space") {
+        // Глубокие, редкие космические переливы в низком регистре
+        const spaceNotes = [146.83, 220.00, 293.66, 349.23]; // Ре-Ля-Ре-Фа
+        soundInterval = setInterval(() => {
+            const randomNote = spaceNotes[Math.floor(Math.random() * spaceNotes.length)];
+            playSoftTone(randomNote, 4.0, 0.25);
+        }, 2000);
+    }
 }
 
-// Логика кнопки управления
+// Кнопка Play/Pause
 triggerBtn.addEventListener('click', function() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     if (!isPlaying) {
         isPlaying = true;
         this.innerText = 'ПАУЗА';
         this.classList.add('active');
         disc.classList.add('playing');
-        runLoop();
-        playSoundStroke();
+        runMusicLoop();
     } else {
         isPlaying = false;
-        this.innerText = 'ВКЛЮЧИТЬ ЗВУК';
+        this.innerText = 'ВКЛЮЧИТЬ МУЗЫКУ';
         this.classList.remove('active');
         disc.classList.remove('playing');
         clearInterval(soundInterval);
     }
 });
 
-// Инициализация при загрузке
-buildPlaylist();
-           
+// Переключение треков и обводки
+tracks.forEach(track => {
+    track.addEventListener('click', function() {
+        tracks.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        activeTrackId = this.getAttribute('data-id');
+        nowPlaying.innerText = "Текущий трек: " + this.innerText.substring(11);
+
+        if (isPlaying) {
+            runMusicLoop();
+        }
+    });
+});
