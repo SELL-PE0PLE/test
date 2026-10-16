@@ -1,162 +1,301 @@
-const powerBtn = document.getElementById('power-btn');
-let soundActive = false;
-let currentTrack = 'ambient';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аудио Плеер</title>
+    <style>
+        body {
+            margin: 0;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-let audioCtx = null;
-let mainVolume = null;
-let activeSources = [];
+        /* Стильный контейнер плеера */
+        .player-container {
+            background: #161b22;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+        }
 
-// Инициализация звукового движка (Web Audio API)
-function initAudio() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    mainVolume = audioCtx.createGain();
-    mainVolume.gain.setValueAtTime(0.5, audioCtx.currentTime); // 50% громкости
-    mainVolume.connect(audioCtx.destination);
-}
+        /* Виниловая пластинка / Обложка */
+        .cover {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(45deg, #1f6feb, #238636);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid #21262d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.5s ease;
+        }
 
-// Генератор чистого процедурного шума
-function createNoiseBuffer() {
-    const bufferSize = audioCtx.sampleRate * 2;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-    
-    for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        b0 = 0.99886 * b0 + white * 0.0555179;
-        b1 = 0.99332 * b1 + white * 0.0750759;
-        b2 = 0.96900 * b2 + white * 0.1538520;
-        b3 = 0.86650 * b3 + white * 0.3104856;
-        b4 = 0.55000 * b4 + white * 0.5329522;
-        b5 = -0.7616 * b5 - white * 0.0168980;
-        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
-        b6 = white * 0.115926;
-    }
-    return buffer;
-}
+        .cover.playing {
+            animation: rotate 4s linear infinite;
+        }
 
-function stopSound() {
-    activeSources.forEach(src => { try { src.stop(); } catch(e){} });
-    activeSources = [];
-}
+        .cover-inner {
+            width: 40px;
+            height: 40px;
+            background: #0d1117;
+            border-radius: 50%;
+        }
 
-// Воспроизведение выбранного пресета
-function playSound() {
-    if (!soundActive || !audioCtx) return;
-    stopSound();
+        h2 {
+            font-size: 18px;
+            margin: 0 0 5px;
+            color: #fff;
+        }
 
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+        .author {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 25px;
+        }
 
-    // 1. Эмбиент (Глубокие переливы) — ОШИБКА ИСПРАВЛЕНА, МАССИВ ЗАПОЛНЕН ЧАСТОТАМИ
-    if (currentTrack === 'ambient') {
-        const freqs =; 
-        freqs.forEach((freq, idx) => {
+        /* Кнопка Play */
+        .play-btn {
+            background: #238636;
+            color: #fff;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .play-btn.playing {
+            background: #da3637;
+            box-shadow: 0 4px 12px rgba(218, 54, 55, 0.4);
+        }
+
+        /* Ползунок громкости */
+        .volume-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .volume-slider {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        /* Список треков с четкой обводкой */
+        .track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid #30363d;
+            padding-top: 20px;
+        }
+
+        .track-item {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 2px solid transparent; /* Заготовка под обводку */
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .track-item:hover {
+            background: #30363d;
+        }
+
+        /* Активное состояние — ЧЕТКАЯ ОБВОДКА */
+        .track-item.active {
+            border-color: #58a6ff !important;
+            background: rgba(88, 166, 255, 0.1);
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <!-- Обложка -->
+        <div id="cover" class="cover">
+            <div class="cover-inner"></div>
+        </div>
+
+        <!-- Информация о треке -->
+        <h2 id="track-title">Ночной Эмбиент</h2>
+        <div class="author">Встроенный синтезатор звука</div>
+
+        <!-- Кнопка управления -->
+        <button id="play-btn" class="play-btn">PLAY</button>
+
+        <!-- Контроль громкости -->
+        <div class="volume-container">
+            <span>🔈</span>
+            <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
+            <span>🔊</span>
+        </div>
+
+        <!-- Интерактивный плейлист -->
+        <div class="track-list">
+            <div class="track-item active" data-track="ambient">✨ Мелодия 1: Ночной Эмбиент</div>
+            <div class="track-item" data-track="waves">🎹 Мелодия 2: Глубокие Клавиши</div>
+            <div class="track-item" data-track="space">🚀 Мелодия 3: Космический Пульс</div>
+        </div>
+    </div>
+
+    <script>
+        const playBtn = document.getElementById('play-btn');
+        const cover = document.getElementById('cover');
+        const trackTitle = document.getElementById('track-title');
+        const volumeSlider = document.getElementById('volume');
+        const trackItems = document.querySelectorAll('.track-item');
+
+        let isPlaying = false;
+        let currentTrack = 'ambient';
+        let audioCtx = null;
+        let mainVolume = null;
+        let soundInterval = null;
+
+        // Инициализация Web Audio API
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            mainVolume = audioCtx.createGain();
+            mainVolume.gain.setValueAtTime(volumeSlider.value, audioCtx.currentTime); 
+            mainVolume.connect(audioCtx.destination);
+        }
+
+        // Чистая генерация музыкальных нот (музыка из кода без багов)
+        function playTone(freq, type, duration) {
+            if (!audioCtx || !isPlaying) return;
+            
             const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 1.5);
+            gainNode.gain.setValueAtTime(mainVolume.gain.value * 0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
             
-            const lfo = audioCtx.createOscillator();
-            const lfoGain = audioCtx.createGain();
-            lfo.frequency.setValueAtTime(0.1 + (idx * 0.03), audioCtx.currentTime);
-            lfoGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
             
-            lfo.connect(lfoGain); lfoGain.connect(gain.gain);
-            osc.connect(gain); gain.connect(mainVolume);
-            
-            osc.start(); lfo.start();
-            activeSources.push(osc, lfo);
-        });
-    } 
-    // 2. Морские волны
-    else if (currentTrack === 'waves') {
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = createNoiseBuffer();
-        noise.loop = true;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        const gain = audioCtx.createGain();
-        
-        const waveInterval = setInterval(() => {
-            if (currentTrack !== 'waves' || !soundActive) {
-                clearInterval(waveInterval);
-                return;
-            }
-            const now = audioCtx.currentTime;
-            filter.frequency.linearRampToValueAtTime(250, now);
-            filter.frequency.exponentialRampToValueAtTime(700, now + 3);
-            gain.gain.linearRampToValueAtTime(0.05, now);
-            gain.gain.linearRampToValueAtTime(0.3, now + 3);
-        }, 6000);
-
-        noise.connect(filter); filter.connect(gain); gain.connect(mainVolume);
-        noise.start(); activeSources.push(noise);
-    }
-    // 3. Дождь
-    else if (currentTrack === 'rain') {
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = createNoiseBuffer();
-        noise.loop = true;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-
-        noise.connect(filter); filter.connect(gain); gain.connect(mainVolume);
-        noise.start(); activeSources.push(noise);
-    }
-    // 4. Птицы
-    else if (currentTrack === 'birds') {
-        function chirp() {
-            if (currentTrack !== 'birds' || !soundActive) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const now = audioCtx.currentTime;
-            
-            osc.frequency.setValueAtTime(900 + Math.random() * 300, now);
-            osc.frequency.exponentialRampToValueAtTime(1600 + Math.random() * 400, now + 0.08);
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-            
-            osc.connect(gain); gain.connect(mainVolume);
-            osc.start(); osc.stop(now + 0.15);
-            setTimeout(chirp, 700 + Math.random() * 1800);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
         }
-        chirp();
-    }
-}
 
-// Переключение пресетов
-window.switchTrack = function(trackName) {
-    currentTrack = trackName;
-    document.querySelectorAll('.track-btn').forEach(btn => btn.classList.remove('active'));
-    
-    // Безопасное определение нажатой кнопки
-    if (event && event.target) {
-        event.target.classList.add('active');
-    }
-    
-    if (soundActive) playSound();
-}
+        // Музыкальные циклы плеера
+        function startMusicLoop() {
+            clearInterval(soundInterval);
+            if (!isPlaying) return;
 
-// Логика кнопки ВКЛ/ВЫКЛ
-powerBtn.addEventListener('click', function() {
-    initAudio();
-    
-    if (!soundActive) {
-        soundActive = true;
-        this.innerText = 'ВЫКЛЮЧИТЬ ЗВУК';
-        this.classList.add('active');
-        playSound();
-    } else {
-        soundActive = false;
-        this.innerText = 'ВКЛЮЧИТЬ ЗВУК';
-        this.classList.remove('active');
-        stopSound();
-    }
-});
-            
+            if (currentTrack === 'ambient') {
+                const chord = [261.63, 329.63, 392.00, 493.88]; // Красивый аккорд Cmaj7
+                soundInterval = setInterval(() => {
+                    const note = chord[Math.floor(Math.random() * chord.length)];
+                    playTone(note, 'sine', 1.5);
+                }, 600);
+            } 
+            else if (currentTrack === 'waves') {
+                const chord = [196.00, 246.94, 293.66, 369.99]; // Меланхоличный Gmaj7 в басу
+                soundInterval = setInterval(() => {
+                    const note = chord[Math.floor(Math.random() * chord.length)];
+                    playTone(note, 'triangle', 2.0);
+                }, 1000);
+            } 
+            else if (currentTrack === 'space') {
+                const sequence = [110.00, 220.00, 165.00, 330.00]; // Пульсирующий арпеджио
+                let step = 0;
+                soundInterval = setInterval(() => {
+                    playTone(sequence[step % sequence.length], 'sine', 0.4);
+                    step++;
+                }, 300);
+            }
+        }
+
+        function stopMusicLoop() {
+            clearInterval(soundInterval);
+        }
+
+        // Переключение состояний Play / Pause
+        function togglePlay() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (!isPlaying) {
+                isPlaying = true;
+                playBtn.innerText = 'PAUSE';
+                playBtn.classList.add('playing');
+                cover.classList.add('playing');
+                startMusicLoop();
+            } else {
+                isPlaying = false;
+                playBtn.innerText = 'PLAY';
+                playBtn.classList.remove('playing');
+                cover.classList.remove('playing');
+                stopMusicLoop();
+            }
+        }
+
+        playBtn.addEventListener('click', togglePlay);
+
+        // Изменение громкости на лету
+        volumeSlider.addEventListener('input', function() {
+            if (mainVolume) {
+                mainVolume.gain.setValueAtTime(this.value, audioCtx.currentTime);
+            }
+        });
+
+        // Клик по трекам из списка — ОБВОДКА ТЕПЕРЬ ПЕРЕХОДИТ
+        trackItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Снимаем класс active со всех треков
+                trackItems.forEach(t => t.classList.remove('active'));
+                
+                // Добавляем класс active на тот, по которому кликнули
+                this.classList.add('active');
+
+                // Меняем текущий трек и заголовок
+                currentTrack = this.getAttribute('data-track');
+                trackTitle.innerText = this.innerText.substring(11); // Убираем эмодзи из заголовка
+
+                if (isPlaying) {
+                    startMusicLoop();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+                
