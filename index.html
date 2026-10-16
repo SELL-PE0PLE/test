@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест Аудио-Движка</title>
+    <title>30 Вариантов Звука — Тестовый Плеер</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="audio-tester">
-        <h1>Тестирование звука (Синтезатор)</h1>
-        
-        <!-- Главная кнопка Вкл/Выкл -->
-        <button id="power-btn" class="power-btn">ВКЛЮЧИТЬ ЗВУК</button>
-
-        <!-- Выбор звуковых пресетов -->
-        <div class="playlist">
-            <button class="track-btn active" onclick="switchTrack('ambient')">✨ Космический Эмбиент</button>
-            <button class="track-btn" onclick="switchTrack('waves')">🌊 Морские волны</button>
-            <button class="track-btn" onclick="switchTrack('rain')">🌧️ Мягкий дождь</button>
-            <button class="track-btn" onclick="switchTrack('birds')">🐦 Лесные птицы</button>
+    <div class="player">
+        <div id="disc" class="disc">
+            <div class="center-hole"></div>
         </div>
+        
+        <h2 id="now-playing">Текущий трек: Вариант 1: Суб-бас пила</h2>
+        
+        <div class="controls">
+            <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ЗВУК</button>
+        </div>
+
+        <!-- Контейнер для 30 треков с автоскроллом -->
+        <div id="playlist" class="playlist"></div>
     </div>
 
     <script src="script.js"></script>
