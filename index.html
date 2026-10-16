@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Нейтральный Фоновый Тестер</title>
+    <title>Кино-Текстуры Фоновый Плеер</title>
     <style>
         body {
             margin: 0;
@@ -21,7 +21,7 @@
             padding: 30px;
             border-radius: 16px;
             border: 1px solid #30363d;
-            width: 320px;
+            width: 340px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
@@ -31,6 +31,10 @@
             margin: 0 0 25px 0;
             color: #fff;
             line-height: 1.4;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .main-btn {
@@ -76,7 +80,7 @@
             background: #30363d;
         }
 
-        /* Четкая синяя обводка, которая теперь переключает сплошные потоки */
+        /* Та самая четкая синяя обводка, которая мгновенно переключает эмбиент */
         .track.active {
             border-color: #58a6ff !important;
             background: rgba(88, 166, 255, 0.1);
@@ -88,14 +92,14 @@
 <body>
 
     <div class="player">
-        <h2 id="now-playing">Текущий режим:<br>Непрерывный мягкий гул (Авиасалон)</h2>
+        <h2 id="now-playing">Текущий фон:<br>Саундтрек 1: Глубокий Космос (Текстура)</h2>
         
-        <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ ФОН</button>
+        <button id="trigger-btn" class="main-btn">ВКЛЮЧИТЬ САУНДТРЕК</button>
 
         <div class="playlist">
-            <div class="track active" data-type="brown" data-name="Непрерывный мягкий гул (Авиасалон)">✈️ Вариант 1: Глубокий сплошной гул</div>
-            <div class="track" data-type="pink" data-name="Шелест водопада или ливня">🌧️ Вариант 2: Сплошной шум дождя</div>
-            <div class="track" data-type="white" data-name="Чистый белый шум (Защита от звуков)">📺 Вариант 3: Ровный белый шум</div>
+            <div class="track active" data-id="interstellar" data-name="Саундтрек 1: Глубокий Космос (Текстура)">🚀 Вариант 1: Космический струнный фон</div>
+            <div class="track" data-id="submarina" data-name="Саундтрек 2: Бесконечная Глубина">🌊 Вариант 2: Тягучий басовый гул</div>
+            <div class="track" data-id="horizon" data-name="Саундтрек 3: Вечный Горизонт">🌅 Вариант 3: Светлый панорамный эмбиент</div>
         </div>
     </div>
 
@@ -105,113 +109,131 @@
         const tracks = document.querySelectorAll('.track');
 
         let isPlaying = false;
-        let activeNoiseType = "brown"; // По умолчанию включаем самый глухой шум
+        let activePreset = "interstellar";
         
         let audioCtx = null;
-        let noiseSource = null;
         let gainNode = null;
+        let activeOscillators = [];
 
-        // Создание сплошного аудиопотока без циклов и повторений
-        function createNoiseBuffer(type) {
-            const bufferSize = 2 * 44100; // 2 секунды сплошного звука
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            
-            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-
-            for (let i = 0; i < bufferSize; i++) {
-                const white = Math.random() * 2 - 1;
-
-                if (type === 'brown') {
-                    // Коричневый шум: убирает абсолютно все высокие частоты, оставляя только глубокий мягкий бархатный гул
-                    b0 = 0.99886 * b0 + white * 0.0555179;
-                    b1 = 0.99332 * b1 + white * 0.0750759;
-                    b2 = 0.96900 * b2 + white * 0.1538520;
-                    b3 = 0.86650 * b3 + white * 0.3104856;
-                    b4 = 0.55000 * b4 + white * 0.5329522;
-                    b5 = -0.7616 * b5 - white * 0.0168980;
-                    data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-                    data[i] *= 0.05; // Снижаем исходную резкость
-                    b6 = white * 0.115926;
-                } else if (type === 'pink') {
-                    // Розовый шум: сбалансированный срез частот, звучит точь-в-точь как ровный ливень за окном
-                    b0 = 0.99886 * b0 + white * 0.0555179;
-                    b1 = 0.99332 * b1 + white * 0.0750759;
-                    b2 = 0.96900 * b2 + white * 0.1538520;
-                    b3 = 0.86650 * b3 + white * 0.3104856;
-                    b4 = 0.55000 * b4 + white * 0.5329522;
-                    b5 = -0.7616 * b5 - white * 0.0168980;
-                    data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-                    data[i] *= 0.15;
-                    b6 = white * 0.115926;
-                } else {
-                    // Белый шум: ровный поток на всех частотах, как пустой ТВ-канал
-                    data[i] = white * 0.1;
-                }
-            }
-            return buffer;
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime); // Плотная, уверенная громкость
+            gainNode.connect(audioCtx.destination);
         }
 
-        function startNoise() {
-            stopNoise();
-            if (!isPlaying) return;
+        // Создаем бесконечную, плавно переливающуюся кино-текстуру без единого удара
+        function startDroneScore() {
+            stopDroneScore();
+            if (!isPlaying || !audioCtx) return;
 
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
             if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            noiseSource = audioCtx.createBufferSource();
-            noiseSource.buffer = createNoiseBuffer(activeNoiseType);
-            noiseSource.loop = true; // Зацикливаем сам сплошной поток, а не отдельные удары
-
-            gainNode = audioCtx.createGain();
-            // Громкость на максимум для теста, но без перегрузки звуковой карты
-            gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime); 
-
-            noiseSource.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            noiseSource.start();
-        }
-
-        function stopNoise() {
-            if (noiseSource) {
-                try { noiseSource.stop(); } catch(e) {}
-                noiseSource.disconnect();
-                noiseSource = null;
+            // Базовые частоты для фундаментальных кино-аккордов (длинные висящие ноты)
+            let frequencies = [];
+            if (activePreset === "interstellar") {
+                // Глубокий, гипнотический космический аккорд (Ля-минор текстура)
+                frequencies = [110.00, 165.00, 220.00, 261.63, 329.63]; 
+            } else if (activePreset === "submarina") {
+                // Сверхглубокий, очень низкий гул океана/подлодки (никаких высоких частот)
+                frequencies = [73.42, 110.00, 146.83, 185.00]; 
+            } else if (activePreset === "horizon") {
+                // Светлый, парящий саундтрек рассвета
+                frequencies = [130.81, 196.00, 261.63, 329.63, 392.00]; 
             }
+
+            frequencies.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const oscGain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
+                // Используем только мягкий синус для создания чистой текстуры
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                // Фильтр низких частот полностью убирает резкость и писк
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(450, audioCtx.currentTime);
+
+                // Делаем экстремально плавный запуск (Fade-in длиной в 3 секунды!), чтобы не было щелчков
+                oscGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                oscGain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 3.0);
+
+                // Создаем эффект живого "дыхания" звука с помощью низкочастотного генератора (LFO)
+                // Он заставляет каждую ноту в аккорде плавно становиться то чуть громче, то тише сама по себе
+                const lfo = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+                // Разная скорость волнения для каждой ноты, чтобы они не двигались одинаково
+                lfo.frequency.setValueAtTime(0.05 + (index * 0.015), audioCtx.currentTime); 
+                lfoGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+
+                lfo.connect(lfoGain);
+                lfoGain.connect(oscGain.gain); // Подключаем качание прямо к громкости ноты
+
+                // Собираем цепочку
+                osc.connect(filter);
+                filter.connect(oscGain);
+                oscGain.connect(gainNode);
+
+                osc.start();
+                lfo.start();
+
+                // Сохраняем узлы, чтобы потом корректно их выключить
+                activeOscillators.push(osc, lfo, oscGain);
+            });
         }
 
-        // Логика кнопки ВКЛ / ВЫКЛ
+        function stopDroneScore() {
+            // Плавное затухание перед полной остановкой, чтобы не щелкало по ушам
+            activeOscillators.forEach(node => {
+                if (node instanceof AudioGainNode) {
+                    try { node.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); } catch(e){}
+                }
+            });
+
+            // Окончательно стопаем генераторы через полсекунды
+            setTimeout(() => {
+                activeOscillators.forEach(node => {
+                    try { node.stop(); } catch(e) {}
+                    try { node.disconnect(); } catch(e) {}
+                });
+                activeOscillators = [];
+            }, 500);
+        }
+
+        // Кнопка главного управления
         triggerBtn.addEventListener('click', function() {
+            initAudio();
+
             if (!isPlaying) {
                 isPlaying = true;
                 this.innerText = 'ПАУЗА';
                 this.classList.add('active');
-                startNoise();
+                startDroneScore();
             } else {
                 isPlaying = false;
-                this.innerText = 'ВКЛЮЧИТЬ ФОН';
+                this.innerText = 'ВКЛЮЧИТЬ САУНДТРЕК';
                 this.classList.remove('active');
-                stopNoise();
+                stopDroneScore();
             }
         });
 
-        // Железобетонный переход синей обводки и мгновенная смена типа сплошного шума
+        // Безупречное переключение треков по клику мыши с обновлением синей рамки
         tracks.forEach(track => {
             track.addEventListener('click', function() {
-                // Смена визуального класса
+                // Смена активного класса обводки
                 tracks.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
 
-                // Обновление состояния
-                activeNoiseType = this.getAttribute('data-type');
+                // Обновление переменных ТЗ
+                activePreset = this.getAttribute('data-id');
                 const trackName = this.getAttribute('data-name');
-                nowPlaying.innerHTML = "Текущий режим:<br>" + trackName;
+                nowPlaying.innerHTML = "Текущий фон:<br>" + trackName;
 
-                // Если звук включен — он мгновенно и бесшовно перестроится без щелчков
+                // Если плеер активен — мгновенно перестраиваем аккорд на лету
                 if (isPlaying) {
-                    startNoise();
+                    startDroneScore();
                 }
             });
         });
