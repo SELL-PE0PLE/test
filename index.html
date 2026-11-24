@@ -100,7 +100,7 @@
       Нажми на круг слева сверху, чтобы управлять музыкой.
     </div>
 
-    <div class="player-wrapper">
+    <div class="player-wrapper" id="player-wrapper">
       <iframe
         id="soundcloud-player"
         title="SoundCloud player"
@@ -110,22 +110,15 @@
 
       <svg
         class="player-cover"
-        viewBox="0 0 856 456"
-        preserveAspectRatio="none"
+        id="player-cover"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
         <path
+          id="cover-path"
           fill="#141414"
           fill-rule="evenodd"
           pointer-events="visiblePainted"
-          d="
-            M0 0 H856 V456 H0 Z
-            M78 50
-            m-22 0
-            a22 22 0 1 0 44 0
-            a22 22 0 1 0 -44 0
-          "
         />
       </svg>
     </div>
@@ -134,7 +127,40 @@
   </main>
 
   <script src="https://w.soundcloud.com/player/api.js"></script>
+
   <script>
+    const wrapper = document.getElementById("player-wrapper");
+    const svg = document.getElementById("player-cover");
+    const path = document.getElementById("cover-path");
+
+    function updateCover() {
+      const width = wrapper.clientWidth;
+      const height = wrapper.clientHeight;
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+      const radius = 22;
+      const centerX = 84;
+      const centerY = 43;
+
+      path.setAttribute(
+        "d",
+        `
+          M0 0
+          H${width}
+          V${height}
+          H0
+          Z
+          M${centerX - radius} ${centerY}
+          a${radius} ${radius} 0 1 0 ${radius * 2} 0
+          a${radius} ${radius} 0 1 0 ${-radius * 2} 0
+        `
+      );
+    }
+
+    updateCover();
+    new ResizeObserver(updateCover).observe(wrapper);
+
     const iframe = document.getElementById("soundcloud-player");
     const widget = SC.Widget(iframe);
 
