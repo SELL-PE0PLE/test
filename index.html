@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Музыкальный плеер</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 30px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #080808;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      padding: 24px;
+      border: 1px solid #292929;
+      border-radius: 30px;
+      background: #141414;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 35px 0 30px;
+      font-size: 64px;
+    }
+
+    .description {
+      margin-bottom: 65px;
+      color: #aaa;
+      font-size: 36px;
+    }
+
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      height: 456px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .player-wrapper iframe {
+      display: block;
+      width: 100%;
+      height: 166px;
+      border: 0;
+    }
+
+    .player-cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .player-cover path {
+      pointer-events: visiblePainted;
+    }
+
+    .footer {
+      margin: 55px 0 35px;
+      color: #777;
+      font-size: 30px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 36px;
+      }
+
+      .description {
+        font-size: 20px;
+      }
+
+      .footer {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>Добро пожаловать</h1>
+
+    <div class="description">
+      Нажми на круг слева сверху, чтобы управлять музыкой.
+    </div>
+
+    <div class="player-wrapper">
+      <iframe
+        id="soundcloud-player"
+        title="SoundCloud player"
+        src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fclever44-576043972%2Fu-devchonok-otravlennyj-prod&color=%23ffffff&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"
+        allow="autoplay"
+      ></iframe>
+
+      <svg
+        class="player-cover"
+        viewBox="0 0 856 456"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          fill="#141414"
+          fill-rule="evenodd"
+          pointer-events="visiblePainted"
+          d="
+            M0 0 H856 V456 H0 Z
+            M78 50
+            m-22 0
+            a22 22 0 1 0 44 0
+            a22 22 0 1 0 -44 0
+          "
+        />
+      </svg>
+    </div>
+
+    <div class="footer">Музыкальный плеер</div>
+  </main>
+
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+  <script>
+    const iframe = document.getElementById("soundcloud-player");
+    const widget = SC.Widget(iframe);
+
+    widget.bind(SC.Widget.Events.READY, function () {
+      widget.setLoop(true);
+    });
+  </script>
+</body>
+</html>
